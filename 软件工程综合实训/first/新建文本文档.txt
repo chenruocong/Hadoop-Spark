@@ -1,0 +1,77 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import numpy as np
+#电影名《触不可及》
+
+def get_urls(n):
+    urls = []
+    for i in range(1,n+1):
+        num = (i-1)*20
+        url = 'https://movie.douban.com/subject/6786002/reviews?start=%s' % num
+        urls.append(url)
+        
+    return urls
+
+
+def get_informations(url):
+    '''不加headers行requests返回418错误'''
+    headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.25 Safari/537.36 Core/1.70.3732.400 QQBrowser/10.5.3819.400'}
+    res = requests.get(url,headers = headers)
+    soup = BeautifulSoup(res.text,'lxml')
+    lists = soup.find_all('div',attrs={'data-cid':True})
+    #lists = soup.find('div',class_='review-list').find_all('div')
+    #lists = soup.find_all('div',attrs={'data-cid':True})[0]
+    #return lists
+
+    data = []
+    for i in lists:
+        '''四个span标签，因为有少部分评论没有给评分，所以我用span标签来判断是否评分'''
+        count = len(i.find_all('span'))
+        if(count != 4):
+            dic = {}
+            dic['id'] = i['data-cid']
+            dic['username'] = i.find('a',class_='name').text
+            dic['score'] = '未评分'
+            dic['date'] = i.find_all('span')[1].text
+            dic['title'] = i.find('h2').text
+            dic['short-content'] = i.find('div',class_='short-content').text
+            dic['useful_count'] = i.find_all('span')[-2].text
+            dic['useless_count'] = i.find_all('span')[-1].text
+            dic['reply_count'] = i.find('a',class_='reply').text
+            data.append(dic)
+        else:
+            dic = {}
+            dic['id'] = i['data-cid']
+            dic['username'] = i.find('a',class_='name').text
+            dic['score'] = i.find_all('span')[0]['title']
+            dic['date'] = i.find_all('span')[1].text
+            dic['title'] = i.find('h2').text
+            dic['short-content'] = i.find('div',class_='short-content').text
+            dic['useful_count'] = i.find_all('span')[-2].text
+            dic['useless_count'] = i.find_all('span')[-1].text
+            dic['reply_count'] = i.find('a',class_='reply').text
+            data.append(dic)
+    return data
+
+
+def get_alldatas(n):
+    alldata = []
+    for u in get_urls(n):
+        alldata.extend(get_informations(u))
+    return pd.DataFrame(alldata)
+
+
+'''下面的代码是为了得到评论有多少页'''
+top_url = 'https://movie.douban.com/subject/6786002/reviews'
+headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.25 Safari/537.36 Core/1.70.3732.400 QQBrowser/10.5.3819.400'}
+top_res = requests.get(top_url,headers = headers)
+top_soup = BeautifulSoup(top_res.text,'lxml')
+list1 = top_soup.find('div',class_='paginator')
+number = int(list1.find_all('a')[-2].text)
+
+df = get_alldatas(number)
+df.to_csv('D:\\Anaconda\\新建文件夹\\《触手可及》影评.csv',
+          index=False,encoding='utf-8-sig')
+
+#print(get_informations('https://movie.douban.com/subject/6786002/reviews?start=0'))

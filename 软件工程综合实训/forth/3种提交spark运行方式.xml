@@ -1,0 +1,108 @@
+一、spark-shell
+1、spark-shell登录本地（只能加载本地数据）
+./bin/spark-shell
+
+2、spark-shell登录standalone集群（不能加载本地数据，只能加载分布式数据）
+./bin/spark-shell --master spark://hadoop01:7077 --executor-memory 1024m --driver-memory 1024m
+
+
+3、spark-shell登录yarn集群
+export HADOOP_CONF_DIR=/home/hadoop/hadoop-2.7.7/etc/hadoop
+./bin/spark-shell --master yarn --deploy-mode client
+
+
+二、spark-submit example SparkPi
+# local
+./bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master local[2] \
+  examples/jars/spark-examples_2.11-2.4.5.jar \
+  10
+
+# standalone cluster in client deploy mode
+./bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master spark://192.168.64.130:7077 \
+  --driver-memory 1G \
+  --executor-memory 1G \
+  --total-executor-cores 2 \
+  examples/jars/spark-examples_2.11-2.4.5.jar \
+  10
+
+# standalone cluster in cluster deploy mode with supervise
+./bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master spark://192.168.64.130:7077 \
+  --deploy-mode cluster \
+  --supervise \
+  --executor-memory 1G \
+  --total-executor-cores 2 \
+  ~/spark-2.4.5-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.4.5.jar \
+  10
+
+# Run on a YARN cluster
+export HADOOP_CONF_DIR=/home/hadoop/hadoop-2.7.7/etc/hadoop
+./bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master yarn \
+  --deploy-mode cluster \
+  --driver-memory 1g \
+  --executor-memory 1g \
+  --num-executors 2 \
+  examples/jars/spark-examples_2.11-2.4.5.jar \
+  10
+  
+./bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master yarn \
+  --deploy-mode client \
+  --executor-memory 1g \
+  --num-executors 2 \
+  examples/jars/spark-examples_2.11-2.4.5.jar \
+  10
+
+Python example pi
+# Run a Python application on a Spark standalone cluster
+./bin/spark-submit \
+  --master spark://192.168.64.130:7077 \
+  examples/src/main/python/pi.py \
+  10
+
+./bin/spark-submit --class org.apache.spark.examples.SparkPi \
+    --master spark://hadoop01:7077 \
+    --deploy-mode client \
+    --driver-memory 512m \
+    --executor-memory 512m \
+    --executor-cores 1 \
+    --queue default\
+    examples/src/main/python/pi.py \
+	10
+
+./bin/spark-submit --class org.apache.spark.examples.SparkPi \
+    --master yarn \
+    --deploy-mode client \
+    --driver-memory 512m \
+    --executor-memory 512m \
+    --executor-cores 1 \
+    --queue default\
+    examples/src/main/python/pi.py \
+10
+
+
+三、打包运行wordcount程序
+1、本地运行
+./bin/spark-submit \
+  --class jxufe.edu.spark.WordCount \
+  --master local[2] \
+  /home/hadoop/spark245.jar \
+  file:///home/hadoop/wordcount.txt file:///home/hadoop/wcout001
+
+2、standalone集群运行
+./bin/spark-submit \
+  --class jxufe.edu.spark.WordCount \
+  --master spark://hadoop01:7077 \
+  --executor-memory 1G \
+  --total-executor-cores 2 \
+  /home/hadoop/spark245.jar \
+  hdfs://hadoop01:9000/wordcount.txt hdfs://hadoop01:9000/user/hadoop/wcout001
+
